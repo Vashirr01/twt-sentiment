@@ -8,17 +8,20 @@ from textblob import TextBlob
 
 class TwitterClient:
     def __init__(self):
-        consumer_key = os.environ.get('API_KEY')
-        consumer_secret = os.environ.get('API_SECRET')
-        access_token = os.environ.get('ACC_TOKEN')
-        access_token_secret = os.environ.get('ACC_SECRET')
+        # consumer_key = os.environ.get('API_KEY')
+        # consumer_secret = os.environ.get('API_SECRET')
+        # access_token = os.environ.get('ACC_TOKEN')
+        # access_token_secret = os.environ.get('ACC_SECRET')
+        bearer_token = os.environ.get('BEARER_TOKEN')
         
+
         try:
             self.client = tweepy.Client(
-                consumer_key=consumer_key,
-                consumer_secret=consumer_secret,
-                access_token=access_token,
-                access_token_secret=access_token_secret
+            #     consumer_key=consumer_key,
+            #     consumer_secret=consumer_secret,
+            #     access_token=access_token,
+            #     access_token_secret=access_token_secret
+                bearer_token = bearer_token
             )
         except Exception as e:
             print(f"Error: Authentication Failed - {str(e)}")
@@ -69,7 +72,7 @@ def main():
     api = TwitterClient()
     
     # Get tweets for the search query
-    tweets = api.get_tweets(query='Elon Musk', count=10)
+    tweets = api.get_tweets(query="Elon Musk", count=10)
     
     # Check if tweets were retrieved successfully
     if tweets is None or len(tweets) == 0:
