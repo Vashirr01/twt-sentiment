@@ -4,25 +4,27 @@ import tweepy
 from tweepy import OAuthHandler
 from textblob import TextBlob
 
-
 class TwitterClient:
     def __init__(self):
         consumer_key = os.environ.get('API_KEY')
         consumer_secret = os.environ.get('API_SECRET')
         access_token = os.environ.get('ACC_TOKEN')
         access_token_secret = os.environ.get('ACC_SECRET')
-
+        
         try:
-            self.auth = OAuthHandler(consumer_key, consumer_secret)
-            self.auth.set_access_token(access_token, access_token_secret)
-            self.api = tweepy.API(self.auth)
-        except:
-            print("Error: Authentication Failed")
+            self.client = tweepy.Client(
+                consumer_key=consumer_key,
+                consumer_secret=consumer_secret,
+                access_token=access_token,
+                access_token_secret=access_token_secret
+            )
+        except Exception as e:
+            print(f"Error: Authentication Failed - {str(e)}")
 
     def clean_tweet(self, tweet):
         """Remove special characters and links from tweet."""
         return ' '.join(
-            re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)",
+            re.sub(r"(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\\w+:\\/\\/\\S+)",
                   " ",
                   tweet).split())
 
@@ -40,26 +42,25 @@ class TwitterClient:
     def get_tweets(self, query, count=10):
         """Fetch tweets and return list with text and sentiment."""
         tweets = []
-
         try:
-            fetched_tweets = self.api.search(q=query, count=count)
+            # Using the new Twitter API v2 endpoint
+            fetched_tweets = self.client.search_recent_tweets(
+                query=query,
+                max_results=count
+            )
             
-            for tweet in fetched_tweets:
-                parsed_tweet = {
-                    'text': tweet.text,
-                    'sentiment': self.get_tweet_sentiment(tweet.text)
-                }
-                
-                if tweet.retweet_count > 0:
-                    if parsed_tweet not in tweets:
-                        tweets.append(parsed_tweet)
-                else:
+            if fetched_tweets.data:
+                for tweet in fetched_tweets.data:
+                    parsed_tweet = {
+                        'text': tweet.text,
+                        'sentiment': self.get_tweet_sentiment(tweet.text)
+                    }
                     tweets.append(parsed_tweet)
                     
             return tweets
-
-        except tweepy.TweepError as e:
-            print("Error: " + str(e))
+        except tweepy.errors.TweepyException as e:
+            print(f"Error: {str(e)}")
+            return None
 
 def main():
     # Initialize the TwitterClient
@@ -68,7 +69,7 @@ def main():
     # Get tweets for the search query
     tweets = api.get_tweets(query='Elon Musk', count=10)
     
-  # Check if tweets were retrieved successfully
+    # Check if tweets were retrieved successfully
     if tweets is None or len(tweets) == 0:
         print("No tweets were retrieved. Please check your API credentials and query.")
         return
