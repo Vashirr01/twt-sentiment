@@ -37,7 +37,7 @@ class TwitterClient:
         else:
             return 'negative'
 
-    def get_tweets(self, query, count=5):
+    def get_tweets(self, query, count=10):
         """Fetch tweets and return list with text and sentiment."""
         tweets = []
 
@@ -61,4 +61,39 @@ class TwitterClient:
         except tweepy.TweepError as e:
             print("Error: " + str(e))
 
+def main():
+    # Initialize the TwitterClient
+    api = TwitterClient()
+    
+    # Get tweets for the search query
+    tweets = api.get_tweets(query='Elon Musk', count=10)
+    
+  # Check if tweets were retrieved successfully
+    if tweets is None or len(tweets) == 0:
+        print("No tweets were retrieved. Please check your API credentials and query.")
+        return
 
+    # Filter positive tweets
+    ptweets = [tweet for tweet in tweets if tweet['sentiment'] == 'positive']
+    print("Positive tweets percentage: {:.2f}%".format(100 * len(ptweets) / len(tweets)))
+    
+    # Filter negative tweets
+    ntweets = [tweet for tweet in tweets if tweet['sentiment'] == 'negative']
+    print("Negative tweets percentage: {:.2f}%".format(100 * len(ntweets) / len(tweets)))
+    
+    # Calculate neutral tweets
+    neutral_count = len(tweets) - (len(ntweets) + len(ptweets))
+    print("Neutral tweets percentage: {:.2f}%".format(100 * neutral_count / len(tweets)))
+
+    # Print all positive tweets
+    print("\n\nPositive tweets:")
+    for tweet in ptweets:
+        print(tweet['text'])
+
+    # Print all negative tweets
+    print("\n\nNegative tweets:")
+    for tweet in ntweets:
+        print(tweet['text'])
+
+if __name__ == "__main__":
+    main()
