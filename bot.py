@@ -16,31 +16,52 @@ client = tweepy.Client(
     bearer_token = bearer_token
 )
 
-print("twitter bot which retweets, likes and follows users(for now)")
-print("bot settings")
-print("like tweets:", LIKE)
-print("follow users:", FOLLOW)
+def main():
+    print("twitter bot which retweets, likes and follows users(for now)")
+    print("bot settings")
+    print("like tweets:", LIKE)
+    print("follow users:", FOLLOW)
 
-for tweet in tweepy.Cursor(client.search, q=QUERY).items():
 
     try:
-        print('\nTweet by: @' + tweet.user.screen_name)
-        tweet.retweet()
-        print("Retweeted the tweet")
+        tweets = client.search_recent_tweets(
+            query=QUERY,
+            max_results=3,
+            tweet_fields=['author_id', 'created_at']
+        )
 
-        if LIKE:
-            tweet.favorite()
-            print("Favorited the tweet")
+        if not tweets.data:
+            print("No tweets found matching the criteria.")
+            return
 
-        if FOLLOW:
-            if not tweet.user.following:
-                tweet.user.follow()
-                print("Followed the user")
+        for tweet in tweets.data:
+            try:
 
-        sleep(SLEEP_TIME)
+                print('\nTweet id: ' + tweet.id)
+                print('\nTweet by: @' + tweet.author_id)
 
-    except tweepy.TweepError as e:
-        print(e.reason)
+                client.retweet(tweet.id)
+                print("Retweeted the tweet")
 
-    except StopIteration:
-        break
+                if LIKE:
+                    client.like(tweet.id)
+                    print("liked the tweet")
+
+                if FOLLOW:
+                    client.follow_user(tweet.author_id)
+                    print("Followed the user")
+
+                sleep(SLEEP_TIME)
+
+            except tweepy.errors.TweepyException as e:
+                print(f"Error processing tweet: {e}")
+                continue
+
+    except tweepy.errors.TweepyException as e:
+        print(f"Error: {e}")
+
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+
+if __name__ == "__main__":
+    main()
